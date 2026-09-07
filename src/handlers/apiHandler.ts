@@ -30,7 +30,7 @@ const validateCreateBookRequest = (
   if (!name || typeof name !== 'string' || name.trim() === '') {
     return {
       valid: false,
-      error: "Field 'name' is required and must be a non-empty string",
+      error: "Campo 'name' is required and must be a non-empty string",
     };
   }
 
