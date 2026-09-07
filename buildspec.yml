@@ -1,0 +1,32 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "Instalando dependencias completas..."
+      - npm install
+
+  build:
+    commands:
+      - echo "Compilando TypeScript..."
+      - npm run build
+      - echo "Instalando solo dependencias de producción..."
+      - rm -rf node_modules
+      - npm install --omit=dev
+      - echo "Copiando node_modules a dist..."
+      - cp -r node_modules dist/
+      - echo "Empaquetando ZIP..."
+      - cd dist
+      - zip -r ../books-api.zip .
+      - cd ..
+
+  post_build:
+    commands:
+      - echo "Build completado exitosamente"
+
+artifacts:
+  files:
+    - books-api.zip
+  discard-paths: no

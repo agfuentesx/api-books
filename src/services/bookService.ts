@@ -1,6 +1,6 @@
-import { Pool, RowDataPacket, ResultSetHeader } from "mysql2/promise";
-import { v4 as uuidv4 } from "uuid";
-import { Book, CreateBookRequest } from "../models/book";
+import { Pool, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
+import { randomUUID } from 'crypto';
+import { Book, CreateBookRequest } from '../models/book';
 
 export class BookService {
   private db: Pool;
@@ -9,7 +9,6 @@ export class BookService {
     this.db = db;
   }
 
-  // Obtener libro por ID
   async getBookById(id: string): Promise<Book | null> {
     const query = `
       SELECT 
@@ -23,18 +22,22 @@ export class BookService {
       LIMIT 1
     `;
 
-    const [rows] = await this.db.execute<RowDataPacket[]>(query, [id]);
+    try {
+      const [rows] = await this.db.execute<RowDataPacket[]>(query, [id]);
 
-    if (rows.length === 0) {
-      return null;
+      if (rows.length === 0) {
+        return null;
+      }
+
+      return rows[0] as Book;
+    } catch (error) {
+      console.error('Error getting book by ID:', error);
+      throw error;
     }
-
-    return rows[0] as Book;
   }
 
-  // Crear un nuevo libro
   async createBook(bookData: CreateBookRequest): Promise<Book> {
-    const id = uuidv4();
+    const id = randomUUID();
     const now = new Date();
 
     const query = `
@@ -42,21 +45,25 @@ export class BookService {
       VALUES (?, ?, ?, ?, ?)
     `;
 
-    await this.db.execute<ResultSetHeader>(query, [
-      id,
-      bookData.name,
-      bookData.description,
-      now,
-      now,
-    ]);
+    try {
+      await this.db.execute<ResultSetHeader>(query, [
+        id,
+        bookData.name,
+        bookData.description,
+        now,
+        now,
+      ]);
 
-    // Retornar el libro creado
-    const createdBook = await this.getBookById(id);
+      const createdBook = await this.getBookById(id);
 
-    if (!createdBook) {
-      throw new Error("Error retrieving created book");
+      if (!createdBook) {
+        throw new Error('Error retrieving created book');
+      }
+
+      return createdBook;
+    } catch (error) {
+      console.error('Error creating book:', error);
+      throw error;
     }
-
-    return createdBook;
   }
 }

@@ -1,21 +1,20 @@
 {
   "name": "books-api",
   "version": "1.0.0",
-  "description": "Books API with AWS Lambda and RDS",
+  "description": "Books API with TypeScript",
   "main": "dist/handlers/apiHandler.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist node_modules *.zip",
+    "package": "npm run build && npm run zip",
+    "zip": "cd dist && zip -r ../books-api.zip . && cd .."
   },
   "dependencies": {
-    "mysql2": "^3.6.0",
-    "uuid": "^9.0.0"
+    "mysql2": "^3.6.0"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.119",
-    "@types/node": "^20.0.0",
-    "@types/uuid": "^9.0.0",
-    "typescript": "^5.0.0"
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0"
   }
 }

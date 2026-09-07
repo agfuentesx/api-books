@@ -2,13 +2,12 @@ import {
   APIGatewayProxyEvent,
   APIGatewayProxyResult,
   Context,
-} from "aws-lambda";
-import { getDbConnection } from "../config/database";
-import { BookService } from "../services/bookService";
-import { CreateBookRequest } from "../models/book";
-import { successResponse, errorResponse } from "../utils/response";
+} from 'aws-lambda';
+import { getDbConnection } from '../config/database';
+import { BookService } from '../services/bookService';
+import { CreateBookRequest } from '../models/book';
+import { successResponse, errorResponse } from '../utils/response';
 
-// Instancia del servicio (reutilizable entre invocaciones)
 let bookService: BookService | null = null;
 
 const getBookService = (): BookService => {
@@ -19,22 +18,27 @@ const getBookService = (): BookService => {
   return bookService;
 };
 
-// Validación del body para POST
 const validateCreateBookRequest = (
-  body: unknown
+  body: any
 ): { valid: boolean; error?: string; data?: CreateBookRequest } => {
-  if (!body || typeof body !== "object") {
-    return { valid: false, error: "Request body is required" };
+  if (!body || typeof body !== 'object') {
+    return { valid: false, error: 'Request body is required' };
   }
 
-  const { name, description } = body as Record<string, unknown>;
+  const { name, description } = body;
 
-  if (!name || typeof name !== "string" || name.trim() === "") {
-    return { valid: false, error: "Field 'name' is required and must be a non-empty string" };
+  if (!name || typeof name !== 'string' || name.trim() === '') {
+    return {
+      valid: false,
+      error: "Field 'name' is required and must be a non-empty string",
+    };
   }
 
-  if (!description || typeof description !== "string" || description.trim() === "") {
-    return { valid: false, error: "Field 'description' is required and must be a non-empty string" };
+  if (!description || typeof description !== 'string' || description.trim() === '') {
+    return {
+      valid: false,
+      error: "Field 'description' is required and must be a non-empty string",
+    };
   }
 
   if (name.trim().length > 255) {
@@ -42,7 +46,10 @@ const validateCreateBookRequest = (
   }
 
   if (description.trim().length > 1000) {
-    return { valid: false, error: "Field 'description' must not exceed 1000 characters" };
+    return {
+      valid: false,
+      error: "Field 'description' must not exceed 1000 characters",
+    };
   }
 
   return {
@@ -54,36 +61,40 @@ const validateCreateBookRequest = (
   };
 };
 
-// Handler GET: Obtener libro por ID
 const handleGetBook = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   const bookId = event.pathParameters?.id;
 
   if (!bookId) {
-    return errorResponse("Book ID is required in path parameters", 400);
+    return errorResponse('Book ID is required in path parameters', 400);
   }
 
-  const service = getBookService();
-  const book = await service.getBookById(bookId);
+  try {
+    const service = getBookService();
+    const book = await service.getBookById(bookId);
 
-  if (!book) {
-    return errorResponse(`Book with ID '${bookId}' not found`, 404);
+    if (!book) {
+      return errorResponse(`Book with ID '${bookId}' not found`, 404);
+    }
+
+    return successResponse(book, 200);
+  } catch (error) {
+    console.error('Error in handleGetBook:', error);
+    const message = error instanceof Error ? error.message : 'Error getting book';
+    return errorResponse(message, 500);
   }
-
-  return successResponse(book, 200);
 };
 
-// Handler POST: Crear libro
 const handleCreateBook = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  let parsedBody: unknown;
+  let parsedBody: any;
 
   try {
     parsedBody = event.body ? JSON.parse(event.body) : null;
   } catch {
-    return errorResponse("Invalid JSON in request body", 400);
+    return errorResponse('Invalid JSON in request body', 400);
   }
 
   const validation = validateCreateBookRequest(parsedBody);
@@ -92,57 +103,59 @@ const handleCreateBook = async (
     return errorResponse(validation.error!, 400);
   }
 
-  const service = getBookService();
-  const newBook = await service.createBook(validation.data!);
+  try {
+    const service = getBookService();
+    const newBook = await service.createBook(validation.data!);
 
-  return successResponse(newBook, 201);
+    return successResponse(newBook, 201);
+  } catch (error) {
+    console.error('Error in handleCreateBook:', error);
+    const message = error instanceof Error ? error.message : 'Error creating book';
+    return errorResponse(message, 500);
+  }
 };
 
-// Handler principal
 export const handler = async (
   event: APIGatewayProxyEvent,
   context: Context
 ): Promise<APIGatewayProxyResult> => {
-  // Evitar que Lambda espere el event loop para cerrar
   context.callbackWaitsForEmptyEventLoop = false;
 
-  console.log("Event received:", JSON.stringify({
+  console.log('Event received:', JSON.stringify({
     method: event.httpMethod,
     path: event.path,
     pathParameters: event.pathParameters,
+    body: event.body,
   }));
 
   try {
     const method = event.httpMethod?.toUpperCase();
 
     switch (method) {
-      case "GET":
+      case 'GET':
         return await handleGetBook(event);
 
-      case "POST":
+      case 'POST':
         return await handleCreateBook(event);
 
-      case "OPTIONS":
-        // Manejo de preflight CORS
+      case 'OPTIONS':
         return {
           statusCode: 200,
           headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           },
-          body: "",
+          body: '',
         };
 
       default:
         return errorResponse(`Method '${method}' not allowed`, 405);
     }
   } catch (error) {
-    console.error("Unhandled error:", error);
-
+    console.error('Unhandled error:', error);
     const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
-
+      error instanceof Error ? error.message : 'Internal server error';
     return errorResponse(errorMessage, 500);
   }
 };

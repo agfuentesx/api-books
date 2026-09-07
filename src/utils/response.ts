@@ -1,5 +1,5 @@
-import { APIGatewayProxyResult } from "aws-lambda";
-import { ApiResponse } from "../models/book";
+import { APIGatewayProxyResult } from 'aws-lambda';
+import { ApiResponse } from '../models/book';
 
 export const buildResponse = <T>(
   statusCode: number,
@@ -8,10 +8,10 @@ export const buildResponse = <T>(
   return {
     statusCode,
     headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
     body: JSON.stringify(body),
   };

@@ -1,6 +1,5 @@
-import mysql, { Pool, PoolOptions } from "mysql2/promise";
+import mysql, { Pool, PoolOptions } from 'mysql2/promise';
 
-// Configuración de la conexión a RDS
 const dbConfig: PoolOptions = {
   host: process.env.DB_HOST!,
   port: Number(process.env.DB_PORT) || 3306,
@@ -12,18 +11,16 @@ const dbConfig: PoolOptions = {
   queueLimit: 0,
   connectTimeout: 60000,
   ssl: {
-    // Habilitar SSL para conexiones seguras con RDS
     rejectUnauthorized: false,
   },
 };
 
-// Pool de conexiones reutilizable entre invocaciones Lambda
 let pool: Pool | null = null;
 
 export const getDbConnection = (): Pool => {
   if (!pool) {
     pool = mysql.createPool(dbConfig);
-    console.log("Database pool created");
+    console.log('Database pool created');
   }
   return pool;
 };
