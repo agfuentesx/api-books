@@ -5,14 +5,14 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "Instalando dependencias completas..."
+      - echo "Instalando dependencias..."
       - npm install
 
   build:
     commands:
       - echo "Compilando TypeScript..."
       - npm run build
-      - echo "Instalando solo dependencias de producción..."
+      - echo "Instalando dependencias de produccion..."
       - rm -rf node_modules
       - npm install --omit=dev
       - echo "Copiando node_modules a dist..."
@@ -21,12 +21,14 @@ phases:
       - cd dist
       - zip -r ../books-api.zip .
       - cd ..
+      - echo "ZIP creado correctamente"
+      - ls -lh books-api.zip
 
   post_build:
     commands:
-      - echo "Build completado exitosamente"
-
-artifacts:
-  files:
-    - books-api.zip
-  discard-paths: no
+      - echo "Desplegando en Lambda..."
+      - aws lambda update-function-code
+          --function-name api-books
+          --zip-file fileb://books-api.zip
+          --region us-east-1
+      - echo "Deploy completado exitosamente"
